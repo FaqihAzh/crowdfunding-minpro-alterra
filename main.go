@@ -4,6 +4,7 @@ import (
 	"crowdfunding-minpro-alterra/config"
 	"crowdfunding-minpro-alterra/database"
 	"crowdfunding-minpro-alterra/handler"
+	"crowdfunding-minpro-alterra/modules/campaign"
 	"crowdfunding-minpro-alterra/modules/user"
 	"crowdfunding-minpro-alterra/utils/auth"
 	"crowdfunding-minpro-alterra/utils/helper"
@@ -21,12 +22,17 @@ func main() {
 	db := database.ConnectDB(config.InitConfigDB())
 
 	userRepository := user.NewRepository(db)
+	campaignRepository := campaign.NewRepository(db)
+
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
+	campaignService := campaign.NewService(campaignRepository)
 
 	userHandler := handler.NewUserHandler(userService, authService)
+	campaignHandler := handler.NewCampaignHandler(campaignService)
 
 	router := gin.Default()
+	router.Static("/images", "./images")
 
 	api := router.Group("/api/v1")
 
@@ -34,6 +40,8 @@ func main() {
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
+
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
 
 	router.Run()
 }
