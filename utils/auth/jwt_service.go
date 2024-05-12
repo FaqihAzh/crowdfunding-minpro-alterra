@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"os"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -12,24 +13,27 @@ type Service interface {
 }
 
 type jwtService struct {
+	secretKey []byte
 }
 
-var SECRET_KEY = []byte("@Demin123#")
-
 func NewService() *jwtService {
-	return &jwtService{}
+	jwtSecret := os.Getenv("JWT_SECRET")
+
+	return &jwtService{
+		secretKey: []byte(jwtSecret),
+	}
 }
 
 func (s *jwtService) GenerateToken(UserID int) (string, error) {
-	claim := jwt.MapClaims{}
-	claim["user_id"] = UserID
+	claims := jwt.MapClaims{
+		"user_id": UserID,
+	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(SECRET_KEY)
-	
+	signedToken, err := token.SignedString(s.secretKey)
 	if err != nil {
-		return signedToken, err
+		return "", err
 	}
 
 	return signedToken, nil
@@ -37,17 +41,15 @@ func (s *jwtService) GenerateToken(UserID int) (string, error) {
 
 func (s *jwtService) ValidateToken(encodedToken string) (*jwt.Token, error) {
 	token, err := jwt.Parse(encodedToken, func(token *jwt.Token) (interface{}, error) {
-		_, ok := token.Method.(*jwt.SigningMethodHMAC)
-
-		if !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Invalid token")
 		}
 
-		return []byte(SECRET_KEY), nil
+		return s.secretKey, nil
 	})
 
 	if err != nil {
-		return token, err
+		return nil, err
 	}
 
 	return token, nil

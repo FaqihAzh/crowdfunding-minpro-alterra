@@ -1,0 +1,979 @@
+openapi: 3.0.3
+info:
+  title: Crowdfunding API
+  description: |
+    Selamat datang di API Crowdfunding. API ini menyediakan antarmuka untuk mengelola kampanye penggalangan dana, pengguna, dan donasi. Ini adalah bagian dari sistem yang dirancang untuk mendukung platform penggalangan dana online. API ini mendukung operasi CRUD untuk entitas seperti pengguna, kampanye, dan donasi. Anda dapat melakukan tindakan seperti mendaftar pengguna baru, mengelola kampanye, memberikan donasi, dan mengelola notifikasi donasi.
+
+  # termsOfService: http://terms.crowdfunding.com/
+  # contact:
+  #   email: support@crowdfunding.com
+  #   name: Tim Dukungan Crowdfunding
+  #   url: http://www.crowdfunding.com/contact
+  # license:
+  #   name: Apache 2.0
+  #   url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+# externalDocs:
+#   description: Temukan lebih lanjut tentang Crowdfunding API
+#   url: http://docs.crowdfunding.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+  # - url: https://staging-api.crowdfunding.com/v1
+  #   description: Staging server untuk pengujian
+
+paths:
+  /users:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      description: Creates a new user in the system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the user
+                  example: "John Doe"
+                email:
+                  type: string
+                  format: email
+                  description: Email address of the user
+                  example: "johndoe@example.com"
+                password:
+                  type: string
+                  description: Password for the user
+                  example: "securepassword123"
+              required:
+                - name
+                - email
+                - password
+      responses:
+        201:
+          description: User successfully registered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Account has been registered."
+                      code:
+                        type: integer
+                        example: 201
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        description: User ID
+                      name:
+                        type: string
+                        example: "John Doe"
+                        description: User's name
+                      email:
+                        type: string
+                        example: "johndoe@example.com"
+                        description: User's email address
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxfQ.abc123XYZ"
+                        description: JWT authentication token
+                      image_url:
+                        type: string
+                        example: ""
+                        description: URL of the user's profile image (if any)
+
+  /sessions:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      description: Authenticate a user using their email and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the user
+                  example: "johndoe@example.com"
+                password:
+                  type: string
+                  description: The password of the user
+                  example: "securepassword123"
+              required:
+                - email
+                - password
+      responses:
+        200:
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Login successful."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 2
+                        description: User ID
+                      name:
+                        type: string
+                        example: "Jane Doe"
+                        description: User's name
+                      email:
+                        type: string
+                        example: "janedoe@example.com"
+                        description: User's email address
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxfQ.abcdef123456"
+                        description: JWT authentication token
+                      image_url:
+                        type: string
+                        example: "images/user2.jpg"
+                        description: URL of the user's profile image (if any)
+
+  /email_checkers:
+    post:
+      tags:
+        - Auth
+      summary: Check email availability
+      description: Checks if the provided email is already registered in the system.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address to check for availability
+                  example: "johndoe@example.com"
+              required:
+                - email
+      responses:
+        200:
+          description: Email availability check successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Email is available."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      is_available:
+                        type: boolean
+                        example: true
+                        description: Indicates whether the email is available (`true`) or already registered (`false`)
+
+  /avatars:
+    post:
+      tags:
+        - Users
+      summary: Upload a user avatar
+      description: Allows the user to upload an avatar image.
+      security:
+        - bearerAuth: [] # Ini menentukan bahwa endpoint ini memerlukan autentikasi bearer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The avatar image file to be uploaded.
+                  example: "avatar.jpg"
+      responses:
+        200:
+          description: Avatar uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Avatar uploaded successfully."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      is_uploaded:
+                        type: boolean
+                        example: true
+                        description: Indicates if the avatar was uploaded successfully.
+
+  /users/fetch:
+    get:
+      tags:
+        - Users
+      summary: Fetch user information
+      description: Fetches the current authenticated user's information.
+      security:
+        - bearerAuth: [] # Ini menunjukkan bahwa endpoint ini memerlukan autentikasi bearer
+      responses:
+        200:
+          description: User information fetched successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Successfully fetched user."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 3
+                        description: User ID
+                      name:
+                        type: string
+                        example: "Development Testing"
+                        description: User's name
+                      email:
+                        type: string
+                        example: "dev@gmail.com"
+                        description: User's email address
+                      token:
+                        type: string
+                        example: ""
+                        description: JWT token (may be blank depending on the context)
+                      image_url:
+                        type: string
+                        example: "images/3-Alterra Logo.png"
+                        description: URL of the user's profile image
+
+  /campaigns:
+    get:
+      tags:
+        - Campaigns
+      summary: List campaigns
+      description: Retrieves a list of campaigns.
+      responses:
+        200:
+          description: List of campaigns.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "List of campaigns."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                          description: Campaign ID
+                        user_id:
+                          type: integer
+                          example: 1
+                          description: ID of the user who created the campaign
+                        name:
+                          type: string
+                          example: "Campaign 1"
+                          description: Campaign name
+                        short_description:
+                          type: string
+                          example: "Short description 1"
+                          description: Short description of the campaign
+                        image_url:
+                          type: string
+                          example: "https://example.com/images/campaign1.jpg"
+                          description: URL of the campaign image
+                        goal_amount:
+                          type: integer
+                          example: 1000
+                          description: Campaign goal amount
+                        current_amount:
+                          type: integer
+                          example: 500
+                          description: Current amount raised
+                        slug:
+                          type: string
+                          example: "campaign-1"
+                          description: Campaign slug
+                    example:
+                      - id: 1
+                        user_id: 1
+                        name: "Campaign 1"
+                        short_description: "Short description 1"
+                        image_url: "https://example.com/images/campaign1.jpg"
+                        goal_amount: 1000
+                        current_amount: 500
+                        slug: "campaign-1"
+                      - id: 2
+                        user_id: 2
+                        name: "Campaign 2"
+                        short_description: "Short description 2"
+                        image_url: "https://example.com/images/campaign2.jpg"
+                        goal_amount: 2000
+                        current_amount: 1500
+                        slug: "campaign-2"
+                      - id: 3
+                        user_id: 1
+                        name: "Campaign 3"
+                        short_description: "Short description 3"
+                        image_url: "https://example.com/images/campaign3.jpg"
+                        goal_amount: 5000
+                        current_amount: 2500
+                        slug: "campaign-3"
+
+    post:
+      tags:
+        - Campaigns
+      summary: Create a new campaign
+      description: Creates a new campaign in the system for the authorized user.
+      security:
+        - bearerAuth: [] # Requires authorization using a bearer token (JWT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the campaign
+                  example: "Create Campaign"
+                short_description:
+                  type: string
+                  description: Short description of the campaign
+                  example: "Short description"
+                description:
+                  type: string
+                  description: Detailed description of the campaign
+                  example: "Description"
+                goal_amount:
+                  type: integer
+                  description: Goal amount in the local currency for the campaign
+                  example: 15000000
+      responses:
+        201:
+          description: Campaign successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Success to create campaign."
+                      code:
+                        type: integer
+                        example: 201
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 6
+                        description: Campaign ID
+                      user_id:
+                        type: integer
+                        example: 1
+                        description: ID of the user who created the campaign
+                      name:
+                        type: string
+                        example: "Create Campaign"
+                        description: Name of the campaign
+                      short_description:
+                        type: string
+                        example: "Short description"
+                        description: Short description of the campaign
+                      image_url:
+                        type: string
+                        example: ""
+                        description: URL of the campaign image (if any)
+                      goal_amount:
+                        type: integer
+                        example: 15000000
+                        description: Goal amount in the local currency
+                      current_amount:
+                        type: integer
+                        example: 0
+                        description: Current amount raised in the local currency
+                      slug:
+                        type: string
+                        example: "create-campaign-1"
+                        description: Slug for SEO and easy access
+
+  /campaigns/{id}:
+    get:
+      tags:
+        - Campaigns
+      summary: Get campaign detail
+      description: Retrieves detailed information about a specific campaign by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the campaign to retrieve
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Campaign detail.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Campaign detail."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 4
+                        description: Campaign ID
+                      name:
+                        type: string
+                        example: "Name Example"
+                        description: Name of the campaign
+                      short_description:
+                        type: string
+                        example: "Short description example."
+                        description: Short description of the campaign
+                      description:
+                        type: string
+                        example: "Description example example example."
+                        description: Detailed description of the campaign
+                      image_url:
+                        type: string
+                        example: "images/example.jpg"
+                        description: URL of the main image of the campaign
+                      goal_amount:
+                        type: integer
+                        example: 10000
+                        description: Goal amount in the local currency
+                      current_amount:
+                        type: integer
+                        example: 4000
+                        description: Current amount raised in the local currency
+                      backer_count:
+                        type: integer
+                        example: 20
+                        description: Number of backers for the campaign
+                      user_id:
+                        type: integer
+                        example: 2
+                        description: ID of the user who created the campaign
+                      slug:
+                        type: string
+                        example: "slug-example"
+                        description: Campaign slug for SEO and easy access
+                      user:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "Jane Doe"
+                            description: Name of the user who created the campaign
+                          image_url:
+                            type: string
+                            example: "images/jane_doe.jpg"
+                            description: URL of the user's profile image
+                      images:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            image_url:
+                              type: string
+                              example: "images/garden1.jpg"
+                              description: URL of the image
+                            is_primary:
+                              type: boolean
+                              example: false
+                              description: Indicates if the image is the primary image
+                        example:
+                          - image_url: "images/garden1.jpg"
+                            is_primary: false
+                          - image_url: "images/garden2.jpg"
+                            is_primary: false
+
+    put:
+      tags:
+        - Campaigns
+      summary: Update campaign by ID (Only for same owner)
+      description: Update campaign data by its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the campaign to update
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the campaign
+                  example: "Name Example Updated"
+                short_description:
+                  type: string
+                  description: Short description of the campaign
+                  example: "Short description example updated."
+                description:
+                  type: string
+                  description: Detailed description of the campaign
+                  example: "Description example updated."
+                goal_amount:
+                  type: integer
+                  description: Goal amount in the local currency
+                  example: 10000
+      responses:
+        200:
+          description: Campaign detail updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Success to update campaign."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 4
+                        description: Campaign ID
+                      name:
+                        type: string
+                        example: "Name Example Updated"
+                        description: Name of the campaign
+                      short_description:
+                        type: string
+                        example: "Short description example updated."
+                        description: Short description of the campaign
+                      description:
+                        type: string
+                        example: "Description example updated."
+                        description: Detailed description of the campaign
+                      image_url:
+                        type: string
+                        example: "images/example.jpg"
+                        description: URL of the main image of the campaign
+                      goal_amount:
+                        type: integer
+                        example: 10000
+                        description: Goal amount in the local currency
+                      current_amount:
+                        type: integer
+                        example: 4000
+                        description: Current amount raised in the local currency
+                      backer_count:
+                        type: integer
+                        example: 20
+                        description: Number of backers for the campaign
+                      user_id:
+                        type: integer
+                        example: 2
+                        description: ID of the user who created the campaign
+                      slug:
+                        type: string
+                        example: "slug-example"
+                        description: Campaign slug for SEO and easy access
+                      user:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "Jane Doe"
+                            description: Name of the user who created the campaign
+                          image_url:
+                            type: string
+                            example: "images/jane_doe.jpg"
+                            description: URL of the user's profile image
+                      images:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            image_url:
+                              type: string
+                              example: "images/garden1.jpg"
+                              description: URL of the image
+                            is_primary:
+                              type: boolean
+                              example: false
+                              description: Indicates if the image is the primary image
+                          example:
+                            - image_url: "images/garden1.jpg"
+                              is_primary: false
+                            - image_url: "images/garden2.jpg"
+                              is_primary: false
+
+  /campaign-images:
+    post:
+      tags:
+        - Campaigns
+      summary: Upload campaign image
+      description: Uploads an image for a campaign. Requires authorization.
+      security:
+        - bearerAuth: [] # Requires authorization using a bearer token (JWT)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                campaign_id:
+                  type: integer
+                  description: ID of the campaign to which the image belongs
+                  example: 1
+                file:
+                  type: string
+                  format: binary
+                  description: The image file to upload for the campaign
+                  example: "file.jpg"
+      responses:
+        200:
+          description: Campaign image successfully uploaded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Campaign image upload successfully."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      is_uploaded:
+                        type: boolean
+                        example: true
+                        description: Indicates whether the image was successfully uploaded
+
+  /campaigns/{campaign_id}/donations:
+    get:
+      tags:
+        - Donations
+      summary: Get donations for a specific campaign
+      description: Retrieves a list of donations made to a specific campaign. Requires authorization.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: campaign_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+            description: ID of the campaign for which donations should be retrieved
+      responses:
+        200:
+          description: List of donations retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Campaign donations."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 5
+                          description: ID of the donation
+                        name:
+                          type: string
+                          example: "Name of campaign"
+                          description: Name of the user who made the donation
+                        amount:
+                          type: integer
+                          example: 1000
+                          description: Amount donated
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "2024-05-09T17:27:34.248+07:00"
+                          description: Date and time when the donation was made
+
+  /donations:
+    get:
+      tags:
+        - Donations
+      summary: Get user donations
+      description: Retrieve donations made by the logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: User donations.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "User donations."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 3
+                          description: Donation ID
+                        amount:
+                          type: integer
+                          example: 200
+                          description: Amount of the donation
+                        status:
+                          type: string
+                          example: "pending"
+                          description: Status of the donation
+                        created_at:
+                          type: string
+                          example: "2024-05-07T16:29:05.589+07:00"
+                          description: Timestamp of when the donation was made
+                        campaign:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              example: "Campaign 1"
+                              description: Name of the campaign associated with the donation
+                            image_url:
+                              type: string
+                              example: "image1.jpg"
+                              description: URL of the image associated with the campaign
+
+    post:
+      tags:
+        - Donations
+      summary: Create a new donation
+      description: Create a new donation for a specific campaign.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                campaign_id:
+                  type: integer
+                  example: 3
+                  description: ID of the campaign for which the donation is made
+                amount:
+                  type: integer
+                  example: 1000
+                  description: Amount of the donation
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Donation created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Donation created."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 6
+                        description: Donation ID
+                      campaign_id:
+                        type: integer
+                        example: 3
+                        description: ID of the campaign associated with the donation
+                      user_id:
+                        type: integer
+                        example: 1
+                        description: ID of the user who made the donation
+                      amount:
+                        type: integer
+                        example: 1000
+                        description: Amount of the donation
+                      status:
+                        type: string
+                        example: "pending"
+                        description: Status of the donation
+                      code:
+                        type: string
+                        example: ""
+                        description: Payment code (if applicable)
+                      payment_url:
+                        type: string
+                        example: "https://app.sandbox.midtrans.com/snap/v4/redirection/9b5db3c0-5104-4abc-b52a-cc92fb67d9d5"
+                        description: URL for making the payment
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT\
