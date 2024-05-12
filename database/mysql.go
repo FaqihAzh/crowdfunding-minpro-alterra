@@ -2,6 +2,7 @@ package database
 
 import (
 	"crowdfunding-minpro-alterra/modules/campaign"
+	"crowdfunding-minpro-alterra/modules/donation"
 	"crowdfunding-minpro-alterra/modules/user"
 	"fmt"
 
@@ -35,5 +36,5 @@ func ConnectDB(config Config) *gorm.DB {
 }
 
 func MigrateAllEntities(db *gorm.DB) {
-	db.AutoMigrate(&user.User{}, &campaign.Campaign{}, &campaign.CampaignImage{})
+	db.AutoMigrate(&user.User{}, &campaign.Campaign{}, &campaign.CampaignImage{}, &donation.Donation{})
 }

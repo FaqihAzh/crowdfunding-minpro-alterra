@@ -11,7 +11,7 @@ type Campaign struct {
 	Name             string       `gorm:"column:name"`
 	ShortDescription string       `gorm:"column:short_description"`
 	Description      string       `gorm:"column:description;type:TEXT"`
-	Perks            string       `gorm:"column:perks;type:TEXT"`
+	// Perks            string       `gorm:"column:perks;type:TEXT"`
 	BackerCount      int          `gorm:"column:backer_count"`
 	GoalAmount       int          `gorm:"column:goal_amount"`
 	CurrentAmount    int          `gorm:"column:current_amount"`

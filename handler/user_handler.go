@@ -179,3 +179,28 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *userHandler) FetchUser(c *gin.Context) {
+	currentUser := c.MustGet("currentUser").(user.User)
+
+	formatter := user.GetFormatUser(currentUser)
+
+	response := helper.APIResponse("Successfuly fetch user.", http.StatusOK, "success", formatter)
+	c.JSON(http.StatusOK, response)
+}
+
+func (h * userHandler) GetAllUsers(c *gin.Context) {
+	users, err := h.userService.GetAllUsers()
+
+	currentUser := c.MustGet("currentUser").(user.User)
+	currentUser.Role = "admin"
+
+	if err != nil {
+		response := helper.APIResponse("Error to get all users", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.APIResponse("List of all users", http.StatusOK, "success", user.GetFormatUsers(users))
+	c.JSON(http.StatusOK, response)
+}
