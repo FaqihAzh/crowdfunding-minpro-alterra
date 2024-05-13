@@ -1,22 +1,25 @@
 package handler
 
 import (
+	"context"
 	"crowdfunding-minpro-alterra/modules/campaign"
 	"crowdfunding-minpro-alterra/modules/user"
 	"crowdfunding-minpro-alterra/utils/helper"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/cloudinary/cloudinary-go"
+	"github.com/cloudinary/cloudinary-go/api/uploader"
 	"github.com/gin-gonic/gin"
 )
 
 type campaignHandler struct {
 	service campaign.Service
+	cloudinary  *cloudinary.Cloudinary
 }
 
-func NewCampaignHandler(service campaign.Service) *campaignHandler {
-	return &campaignHandler{service}
+func NewCampaignHandler(service campaign.Service, cloudinary *cloudinary.Cloudinary) *campaignHandler {
+	return &campaignHandler{service, cloudinary}
 }
 
 func (h *campaignHandler) GetCampaigns(c *gin.Context) {
@@ -143,42 +146,47 @@ func (h *campaignHandler) UploadImage(c *gin.Context) {
 
 	currentUser := c.MustGet("currentUser").(user.User)
 	input.User = currentUser
-	userID := currentUser
 
 	file, err := c.FormFile("file")
-
-	if err != nil {
-		data := gin.H{"is_uploaded": false}
-
-		response := helper.APIResponse("Failed to upload campaign image.", http.StatusBadRequest, "error", data)
-		c.JSON(http.StatusBadRequest, response)
-
-		return
-	}
-
-	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
-
-	err = c.SaveUploadedFile(file, path)
 	if err != nil {
 		data := gin.H{"is_uploaded": false}
 		response := helper.APIResponse("Failed to upload campaign image.", http.StatusBadRequest, "error", data)
-
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	_, err = h.service.SaveCampaignImage(input, path)
-	
+	fileReader, err := file.Open()
+	if err != nil {
+		response := helper.APIResponse("Failed to open uploaded file.", http.StatusInternalServerError, "error", nil)
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+	defer fileReader.Close()
+
+	params := uploader.UploadParams{
+		Folder:    "campaigns",
+		Overwrite: true,
+	}
+
+	uploadResult, err := h.cloudinary.Upload.Upload(context.Background(), fileReader, params)
+		if err != nil {
+		response := helper.APIResponse("Failed to upload campaign image.", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	imageURL := uploadResult.SecureURL
+
+	_, err = h.service.SaveCampaignImage(input, imageURL)
+
 	if err != nil {
 		data := gin.H{"is_uploaded": false}
 		response := helper.APIResponse("Failed to upload campaign image.", http.StatusBadRequest, "error", data)
-
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
 	data := gin.H{"is_uploaded": true}
-	response := helper.APIResponse("Campaign image upload successfuly.", http.StatusOK, "success", data)
-
+	response := helper.APIResponse("Campaign image uploaded successfully.", http.StatusOK, "success", data)
 	c.JSON(http.StatusOK, response)
 }
