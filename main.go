@@ -23,10 +23,9 @@ import (
 )
 
 func main() {
-	config.LoadEnv()
 	config.InitConfigDB()
 
-	db := database.ConnectDB(config.InitConfigDB())
+	db := database.ConnectDB()
 
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
