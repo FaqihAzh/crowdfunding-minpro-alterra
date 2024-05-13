@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crowdfunding-minpro-alterra/config"
 	"crowdfunding-minpro-alterra/database"
 	"crowdfunding-minpro-alterra/handler"
 	"crowdfunding-minpro-alterra/modules/campaign"
@@ -23,9 +22,11 @@ import (
 )
 
 func main() {
-	config.InitConfigDB()
-
-	db := database.ConnectDB()
+	db, err := database.ConnectDB()
+	if err != nil {
+		fmt.Println("Failed to connect to the database:", err)
+		return
+	}
 
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
