@@ -1,22 +1,25 @@
 package handler
 
 import (
+	"context"
 	"crowdfunding-minpro-alterra/modules/user"
 	"crowdfunding-minpro-alterra/utils/auth"
 	"crowdfunding-minpro-alterra/utils/helper"
-	"fmt"
 	"net/http"
 
+	"github.com/cloudinary/cloudinary-go"
+	"github.com/cloudinary/cloudinary-go/api/uploader"
 	"github.com/gin-gonic/gin"
 )
 
 type userHandler struct {
 	userService user.Service
 	authService auth.Service
+	cloudinary  *cloudinary.Cloudinary
 }
 
-func NewUserHandler(userService user.Service, authService auth.Service) *userHandler {
-	return &userHandler{userService, authService}
+func NewUserHandler(userService user.Service, authService auth.Service, cloudinary *cloudinary.Cloudinary) *userHandler {
+	return &userHandler{userService, authService, cloudinary}
 }
 
 func (h *userHandler) RegisterUser(c *gin.Context) {
@@ -141,42 +144,47 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 
 func (h *userHandler) UploadAvatar(c *gin.Context) {
 	file, err := c.FormFile("avatar")
-
 	if err != nil {
 		data := gin.H{"is_uploaded": false}
 		response := helper.APIResponse("Failed to upload avatar image.", http.StatusBadRequest, "error", data)
-
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
+
+	fileReader, err := file.Open()
+	if err != nil {
+		response := helper.APIResponse("Failed to open uploaded file.", http.StatusInternalServerError, "error", nil)
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+	defer fileReader.Close()
+
+	params := uploader.UploadParams{
+		Folder:    "avatars",
+		Overwrite: true,
+	}
+
+	uploadResult, err := h.cloudinary.Upload.Upload(context.Background(), fileReader, params)
+	if err != nil {
+		response := helper.APIResponse("Failed to upload avatar image.", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	imageURL := uploadResult.SecureURL
 
 	currentUser := c.MustGet("currentUser").(user.User)
 	userID := currentUser.ID
-
-	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
-
-	err = c.SaveUploadedFile(file, path)
+	currentUser.AvatarFileName = imageURL
+	_, err = h.userService.SaveAvatar(userID, imageURL)
 	if err != nil {
-		data := gin.H{"is_uploaded": false}
-		response := helper.APIResponse("Failed to upload avatar image.", http.StatusBadRequest, "error", data)
-
-		c.JSON(http.StatusBadRequest, response)
+		response := helper.APIResponse("Failed to save avatar image URL.", http.StatusInternalServerError, "error", nil)
+		c.JSON(http.StatusInternalServerError, response)
 		return
 	}
 
-	_, err = h.userService.SaveAvatar(userID, path)
-	
-	if err != nil {
-		data := gin.H{"is_uploaded": false}
-		response := helper.APIResponse("Failed to upload avatar image.", http.StatusBadRequest, "error", data)
-
-		c.JSON(http.StatusBadRequest, response)
-		return
-	}
-
-	data := gin.H{"is_uploaded": true}
-	response := helper.APIResponse("Avatar upload successfuly.", http.StatusOK, "success", data)
-
+	formatter := user.GetFormatUser(currentUser)
+	response := helper.APIResponse("Avatar uploaded successfully.", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
 }
 

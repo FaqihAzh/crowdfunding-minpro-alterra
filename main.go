@@ -5,14 +5,18 @@ import (
 	"crowdfunding-minpro-alterra/database"
 	"crowdfunding-minpro-alterra/handler"
 	"crowdfunding-minpro-alterra/modules/campaign"
+	"crowdfunding-minpro-alterra/modules/chat"
 	"crowdfunding-minpro-alterra/modules/donation"
 	"crowdfunding-minpro-alterra/modules/payment"
 	"crowdfunding-minpro-alterra/modules/user"
 	"crowdfunding-minpro-alterra/utils/auth"
 	"crowdfunding-minpro-alterra/utils/helper"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/cloudinary/cloudinary-go"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,22 +31,34 @@ func main() {
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
 	donationRepository := donation.NewRepository(db)
+	chatRepository := chat.NewChatRepository()
 
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
 	campaignService := campaign.NewService(campaignRepository)
 	paymentService := payment.NewService()
 	donationService := donation.NewService(donationRepository, campaignRepository, paymentService)
+	chatUC := chat.NewChatUseCase(chatRepository)
 
-	userHandler := handler.NewUserHandler(userService, authService)
-	campaignHandler := handler.NewCampaignHandler(campaignService)
+	cloudinary, err := initCloudinary()
+    if err != nil {
+        fmt.Println("Failed to initialize Cloudinary:", err)
+        return
+    }
+
+	userHandler := handler.NewUserHandler(userService, authService, cloudinary)
+	campaignHandler := handler.NewCampaignHandler(campaignService, cloudinary)
 	donationHandler := handler.NewDonationHandler(donationService)
+	chatHandler := handler.NewChatHandler(chatUC)
+
 
 	router := gin.Default()
 	router.Use(cors.Default())
 	router.Static("/images", "./images")
 
 	api := router.Group("/api/v1")
+
+	api.POST("/chatbot", chatHandler.HandleChat)
 
 	api.GET("/admin/users", authMiddleware(authService, userService), userHandler.GetAllUsers)
 
@@ -68,6 +84,15 @@ func main() {
 	})
 	
 	router.Run()
+}
+
+func initCloudinary() (*cloudinary.Cloudinary, error) {
+	cloudinaryURL := os.Getenv("CLOUDINARY_URL")
+	cloudinary, err := cloudinary.NewFromURL(cloudinaryURL)
+	if err != nil {
+			return nil, err
+	}
+	return cloudinary, nil
 }
 
 func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
