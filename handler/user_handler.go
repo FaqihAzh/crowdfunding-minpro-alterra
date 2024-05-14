@@ -207,7 +207,7 @@ func (h * userHandler) GetAllUsers(c *gin.Context) {
 	}
 
 	currentUser := c.MustGet("currentUser").(user.User)
-	if currentUser.ID != 7 {
+	if currentUser.ID != 2 {
 		response := helper.APIResponse("You are not authorized", http.StatusForbidden, "error", nil)
 		c.JSON(http.StatusForbidden, response)
 		return
@@ -230,7 +230,7 @@ func (h *userHandler) DeleteUser(c *gin.Context) {
 	}
 
 	currentUser := c.MustGet("currentUser").(user.User)
-	if currentUser.ID != 7 {
+	if currentUser.ID != 2 {
 			response := helper.APIResponse("You are not authorized", http.StatusForbidden, "error", nil)
 			c.JSON(http.StatusForbidden, response)
 			return
