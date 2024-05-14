@@ -63,6 +63,7 @@ func main() {
 	api.GET("/admin/users", authMiddleware(authService, userService), userHandler.GetAllUsers)
 	api.DELETE("/admin/users/:id", authMiddleware(authService, userService), userHandler.DeleteUser)
 	api.GET("/admin/campaigns", campaignHandler.GetCampaigns)
+	api.POST("/admin/sessions", userHandler.Login)
 
 
 	api.POST("/users", userHandler.RegisterUser)
