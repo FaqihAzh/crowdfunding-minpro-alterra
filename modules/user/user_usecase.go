@@ -14,6 +14,7 @@ type Service interface {
 	GetUserByID(ID int) (User, error)
 	GetAllUsers() ([]User, error)
 	UpdateUser(input FormUpdateUserInput) (User, error)
+	DeleteUser(ID int) error
 }
 
 type service struct {
@@ -134,4 +135,22 @@ func (s *service) UpdateUser(input FormUpdateUserInput) (User, error) {
 	}
 
 	return updatedUser, nil
+}
+
+func (s *service) DeleteUser(ID int) error {
+	user, err := s.repository.FindByID(ID)
+	if err != nil {
+			return err
+	}
+
+	if user.ID == 0 {
+			return errors.New("No user found with that ID")
+	}
+
+	err = s.repository.Delete(ID)
+	if err != nil {
+			return err
+	}
+
+	return nil
 }
