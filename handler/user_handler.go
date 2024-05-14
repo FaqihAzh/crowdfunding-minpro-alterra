@@ -200,15 +200,49 @@ func (h *userHandler) FetchUser(c *gin.Context) {
 func (h * userHandler) GetAllUsers(c *gin.Context) {
 	users, err := h.userService.GetAllUsers()
 
-	currentUser := c.MustGet("currentUser").(user.User)
-	currentUser.Role = "admin"
-
 	if err != nil {
 		response := helper.APIResponse("Error to get all users", http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
+	currentUser := c.MustGet("currentUser").(user.User)
+	if currentUser.ID != 7 {
+		response := helper.APIResponse("You are not authorized", http.StatusForbidden, "error", nil)
+		c.JSON(http.StatusForbidden, response)
+		return
+	}
+
 	response := helper.APIResponse("List of all users", http.StatusOK, "success", user.GetFormatUsers(users))
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *userHandler) DeleteUser(c *gin.Context) {
+	var input struct {
+			ID int `uri:"id" binding:"required"`
+	}
+
+	err := c.ShouldBindUri(&input)
+	if err != nil {
+			response := helper.APIResponse("Failed to delete user", http.StatusBadRequest, "error", nil)
+			c.JSON(http.StatusBadRequest, response)
+			return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+	if currentUser.ID != 7 {
+			response := helper.APIResponse("You are not authorized", http.StatusForbidden, "error", nil)
+			c.JSON(http.StatusForbidden, response)
+			return
+	}
+
+	err = h.userService.DeleteUser(input.ID)
+	if err != nil {
+			response := helper.APIResponse("Failed to delete user", http.StatusBadRequest, "error", nil)
+			c.JSON(http.StatusBadRequest, response)
+			return
+	}
+
+	response := helper.APIResponse("User deleted successfully", http.StatusOK, "success", nil)
 	c.JSON(http.StatusOK, response)
 }

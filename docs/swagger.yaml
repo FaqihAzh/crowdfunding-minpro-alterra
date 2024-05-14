@@ -4,25 +4,181 @@ info:
   description: |
     Selamat datang di API Crowdfunding. API ini menyediakan antarmuka untuk mengelola kampanye penggalangan dana, pengguna, dan donasi. Ini adalah bagian dari sistem yang dirancang untuk mendukung platform penggalangan dana online. API ini mendukung operasi CRUD untuk entitas seperti pengguna, kampanye, dan donasi. Anda dapat melakukan tindakan seperti mendaftar pengguna baru, mengelola kampanye, memberikan donasi, dan mengelola notifikasi donasi.
 
-  # termsOfService: http://terms.crowdfunding.com/
-  # contact:
-  #   email: support@crowdfunding.com
-  #   name: Tim Dukungan Crowdfunding
-  #   url: http://www.crowdfunding.com/contact
-  # license:
-  #   name: Apache 2.0
-  #   url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    email: faqihazh@gmail.com
+    name: Muhamad Faqih Azhar
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.0
-# externalDocs:
-#   description: Temukan lebih lanjut tentang Crowdfunding API
-#   url: http://docs.crowdfunding.com
+externalDocs:
+  description: Temukan lebih lanjut tentang Crowdfunding API
+  url: https://github.com/FaqihAzh/crowdfunding-minpro-alterra
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Local server
+  - url: https://crowdfunding-minpro-alterra-zoofd2jyoa-uc.a.run.app/api/v1
+    description: Production server
   # - url: https://staging-api.crowdfunding.com/v1
   #   description: Staging server untuk pengujian
 
 paths:
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: Get all users
+      description: Retrieve a list of all users.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "List of all users"
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                          description: User ID
+                        name:
+                          type: string
+                          example: "John Doe"
+                          description: User's name
+                        email:
+                          type: string
+                          example: "johndoe@example.com"
+                          description: User's email address
+                        image_url:
+                          type: string
+                          example: "https://example.com/image.jpg"
+                          description: URL of the user's profile image
+
+  /admin/users/{id}:
+    delete:
+      tags:
+        - Admin
+      summary: Delete a user by ID
+      description: Delete a user by their ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the user to delete
+          schema:
+            type: integer
+      responses:
+        200:
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "User deleted successfully"
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: string
+                    example: null
+
+  /admin/sessions:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: Authenticate a user using their email and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the user
+                  example: "admin@admin.com"
+                password:
+                  type: string
+                  description: The password of the user
+                  example: "admin123"
+              required:
+                - email
+                - password
+      responses:
+        200:
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Login successful."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                        description: User ID
+                      name:
+                        type: string
+                        example: "admin"
+                        description: User's name
+                      email:
+                        type: string
+                        example: "admin@gmail.com"
+                        description: User's email address
+                      token:
+                        type: string
+                        example: "JSON Web Token"
+                        description: JWT authentication token
+                      image_url:
+                        type: string
+                        example: "Avatar Image.jpg"
+                        description: URL of the user's profile image (if any)
+
   /users:
     post:
       tags:

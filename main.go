@@ -61,6 +61,7 @@ func main() {
 	api.POST("/chatbot", chatHandler.HandleChat)
 
 	api.GET("/admin/users", authMiddleware(authService, userService), userHandler.GetAllUsers)
+	api.DELETE("/admin/users/:id", authMiddleware(authService, userService), userHandler.DeleteUser)
 
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)

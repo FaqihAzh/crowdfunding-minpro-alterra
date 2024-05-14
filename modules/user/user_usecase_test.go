@@ -51,6 +51,10 @@ func (m *MockRepository) FindAll() ([]User, error) {
 	return []User{}, nil
 }
 
+func (m *MockRepository) Delete(ID int) error {
+	return nil
+}
+
 // TestRegisterUser
 func TestRegisterUser(t *testing.T) {
 	repo := &MockRepository{}
