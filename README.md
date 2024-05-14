@@ -64,7 +64,9 @@ Fitur utama di aplikasi ini srupda dengan flow intinya, yaitu user masuk dan mel
 
 ## API Documentation
 
-sertakan dokumentasi API yang dibuat dengan menggunakan postman / swagger.
+```
+https://winter-astronaut-378621.postman.co/workspace/Adosistering~8afaf234-12a3-4403-b27d-e5a8864c4092/collection/24029040-0b8e2295-acf9-4243-9b90-5fc05b81e389?action=share&creator=24029040
+```
 
 ## ERD
 

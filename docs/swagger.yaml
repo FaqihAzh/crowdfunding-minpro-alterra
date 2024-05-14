@@ -21,6 +21,75 @@ servers:
   #   description: Staging server untuk pengujian
 
 paths:
+  /admin/sessions:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      description: Authenticate a user using their email and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the user
+                  example: "admin@admin.com"
+                password:
+                  type: string
+                  description: The password of the user
+                  example: "admin123"
+              required:
+                - email
+                - password
+      responses:
+        200:
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Login successful."
+                      code:
+                        type: integer
+                        example: 200
+                      status:
+                        type: string
+                        example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 5
+                        description: User ID
+                      name:
+                        type: string
+                        example: "admin"
+                        description: User's name
+                      email:
+                        type: string
+                        example: "admin@gmail.com"
+                        description: User's email address
+                      token:
+                        type: string
+                        example: "JSON Web Token"
+                        description: JWT authentication token
+                      image_url:
+                        type: string
+                        example: "Avatar Image.jpg"
+                        description: URL of the user's profile image (if any)
+
   /admin/users:
     get:
       tags:
@@ -110,34 +179,15 @@ paths:
                     type: string
                     example: null
 
-  /admin/sessions:
-    post:
+  /admin/campaigns:
+    get:
       tags:
         - Admin
-      summary: Admin login
-      description: Authenticate a user using their email and password.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  description: The email address of the user
-                  example: "admin@admin.com"
-                password:
-                  type: string
-                  description: The password of the user
-                  example: "admin123"
-              required:
-                - email
-                - password
+      summary: Get all campaigns
+      description: Retrieves a list of campaigns.
       responses:
         200:
-          description: Login successful.
+          description: List of campaigns.
           content:
             application/json:
               schema:
@@ -148,7 +198,7 @@ paths:
                     properties:
                       message:
                         type: string
-                        example: "Login successful."
+                        example: "List of campaigns."
                       code:
                         type: integer
                         example: 200
@@ -156,28 +206,67 @@ paths:
                         type: string
                         example: "success"
                   data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 5
-                        description: User ID
-                      name:
-                        type: string
-                        example: "admin"
-                        description: User's name
-                      email:
-                        type: string
-                        example: "admin@gmail.com"
-                        description: User's email address
-                      token:
-                        type: string
-                        example: "JSON Web Token"
-                        description: JWT authentication token
-                      image_url:
-                        type: string
-                        example: "Avatar Image.jpg"
-                        description: URL of the user's profile image (if any)
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                          description: Campaign ID
+                        user_id:
+                          type: integer
+                          example: 1
+                          description: ID of the user who created the campaign
+                        name:
+                          type: string
+                          example: "Campaign 1"
+                          description: Campaign name
+                        short_description:
+                          type: string
+                          example: "Short description 1"
+                          description: Short description of the campaign
+                        image_url:
+                          type: string
+                          example: "https://example.com/images/campaign1.jpg"
+                          description: URL of the campaign image
+                        goal_amount:
+                          type: integer
+                          example: 1000
+                          description: Campaign goal amount
+                        current_amount:
+                          type: integer
+                          example: 500
+                          description: Current amount raised
+                        slug:
+                          type: string
+                          example: "campaign-1"
+                          description: Campaign slug
+                    example:
+                      - id: 1
+                        user_id: 1
+                        name: "Campaign 1"
+                        short_description: "Short description 1"
+                        image_url: "https://example.com/images/campaign1.jpg"
+                        goal_amount: 1000
+                        current_amount: 500
+                        slug: "campaign-1"
+                      - id: 2
+                        user_id: 2
+                        name: "Campaign 2"
+                        short_description: "Short description 2"
+                        image_url: "https://example.com/images/campaign2.jpg"
+                        goal_amount: 2000
+                        current_amount: 1500
+                        slug: "campaign-2"
+                      - id: 3
+                        user_id: 1
+                        name: "Campaign 3"
+                        short_description: "Short description 3"
+                        image_url: "https://example.com/images/campaign3.jpg"
+                        goal_amount: 5000
+                        current_amount: 2500
+                        slug: "campaign-3"
 
   /users:
     post:
